@@ -407,7 +407,7 @@ func _show_import_category_picker() -> void:
 	picker.dialog_text = "Choose which sound setting should use the imported file."
 	var buttons := HBoxContainer.new()
 	for category in SOUND_CATEGORIES:
-		var category_name := category
+		var category_name: String = str(category)
 		var button := Button.new()
 		button.text = category_name.capitalize()
 		button.pressed.connect(func():
@@ -1177,7 +1177,7 @@ func _build_quick_settings() -> void:
 		if tile_name == "Sound & Alarms":
 			tile.pressed.connect(_open_sound_settings)
 		else:
-			var tile_key := tile_name
+			var tile_key: String = str(tile_name)
 			var tile_ref := tile
 			tile.toggled.connect(func(enabled: bool): _handle_system_tile(tile_key, enabled, tile_ref))
 		system_tile_buttons[tile_name] = tile
@@ -1306,7 +1306,7 @@ func _build_home_edit_menu() -> void:
 	vbox.add_child(title)
 
 	for opt_text in ["Wallpaper and style", "Widgets", "Home screen grid", "Settings"]:
-		var option_name := opt_text
+		var option_name: String = str(opt_text)
 		var btn := Button.new()
 		btn.text = option_name
 		btn.custom_minimum_size = Vector2(0, 48)
@@ -1816,6 +1816,29 @@ func _layout_responsive() -> void:
 		notif_shade.position.y = 0.0
 	if is_instance_valid(qs_shade) and is_qs_open:
 		qs_shade.position.y = 0.0
+
+func _open_android_notification_access() -> void:
+	if android_bridge == null:
+		_show_message("Notification access", "The Fire OS Android bridge is not available in this build.")
+		return
+	if android_bridge.has_method("isNotificationAccessEnabled") and bool(android_bridge.isNotificationAccessEnabled()):
+		_show_message("Notification access", "Notification access is already enabled for this launcher.")
+		return
+	if android_bridge.has_method("openNotificationAccessSettings"):
+		android_bridge.openNotificationAccessSettings()
+	else:
+		_show_message("Notification access", "This bridge build does not provide notification access settings.")
+
+func _open_android_home_settings() -> void:
+	if android_bridge == null:
+		_show_message("Default Home app", "The Fire OS Android bridge is not available in this build.")
+		return
+	if android_bridge.has_method("openHomeSettings"):
+		android_bridge.openHomeSettings()
+	elif android_bridge.has_method("openSettings"):
+		android_bridge.openSettings("android.settings.HOME_SETTINGS")
+	else:
+		_show_message("Default Home app", "Fire OS could not open the Home app settings page.")
 
 func _connect_android_bridge() -> void:
 	if OS.get_name() != "Android":
