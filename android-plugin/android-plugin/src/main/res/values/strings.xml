@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_admin_label">One UI Shell device lock</string>
+    <string name="device_admin_description">Allow One UI Shell to lock this tablet only when you tap Device lock.</string>
+</resources>

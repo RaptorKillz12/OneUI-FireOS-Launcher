@@ -1,0 +1,5 @@
+.godot/
+android-plugin/.gradle/
+android-plugin/**/build/
+*.apk
+*.aab

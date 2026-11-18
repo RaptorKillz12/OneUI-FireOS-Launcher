@@ -1,0 +1,66 @@
+name: Build Fire OS Android Bridge
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'android-plugin/**'
+      - 'addons/FireOSTabletBridge/**'
+      - '.github/workflows/build-android-bridge.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK platform
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build debug and release AAR
+        working-directory: android-plugin
+        run: gradle :android-plugin:assembleDebug :android-plugin:assembleRelease --stacktrace
+
+      - name: Copy AAR files into Godot addon
+        run: |
+          mkdir -p addons/FireOSTabletBridge/bin/debug addons/FireOSTabletBridge/bin/release
+          cp android-plugin/android-plugin/build/outputs/aar/android-plugin-debug.aar addons/FireOSTabletBridge/bin/debug/FireOSTabletBridge.aar
+          cp android-plugin/android-plugin/build/outputs/aar/android-plugin-release.aar addons/FireOSTabletBridge/bin/release/FireOSTabletBridge.aar
+
+      - name: Upload bridge AARs
+        uses: actions/upload-artifact@v4
+        with:
+          name: FireOSTabletBridge-AARs
+          path: |
+            addons/FireOSTabletBridge/bin/debug/FireOSTabletBridge.aar
+            addons/FireOSTabletBridge/bin/release/FireOSTabletBridge.aar
+
+      - name: Commit built AARs
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add addons/FireOSTabletBridge/bin
+          if git diff --cached --quiet; then
+            echo "AAR files are already up to date."
+          else
+            git commit -m "Build Fire OS Android bridge AARs"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
