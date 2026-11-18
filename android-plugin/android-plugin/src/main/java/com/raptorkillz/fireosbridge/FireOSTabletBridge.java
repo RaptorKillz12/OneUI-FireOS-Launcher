@@ -31,7 +31,6 @@ import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public final class FireOSTabletBridge extends GodotPlugin {
     private static final String PREFS = "one_ui_shell_bridge";
@@ -40,8 +39,8 @@ public final class FireOSTabletBridge extends GodotPlugin {
 
     @Override public String getPluginName() { return "FireOSTabletBridge"; }
 
-    @Override public Set<String> getPluginMethods() {
-        return new HashSet<>(Arrays.asList(
+    @Override public List<String> getPluginMethods() {
+        return Arrays.asList(
             "getInstalledAppsJson", "launchApp", "launchIntent", "openSettings",
             "getWifiEnabled", "setWifiEnabled", "getBluetoothEnabled", "setBluetoothEnabled",
             "getDndEnabled", "hasDndAccess", "setDndEnabled", "openDndAccessSettings",
@@ -51,7 +50,7 @@ public final class FireOSTabletBridge extends GodotPlugin {
             "requestDeviceAdmin", "lockDevice", "scheduleDailyAlarm", "cancelDailyAlarm",
             "getBatteryPercent", "openHomeSettings", "setSystemBarsHidden",
             "getMediaVolume", "setMediaVolume"
-        ));
+        );
     }
 
     private Activity activity() { return getActivity(); }
