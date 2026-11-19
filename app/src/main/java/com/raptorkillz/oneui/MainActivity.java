@@ -3,44 +3,45 @@ package com.raptorkillz.oneui;
 import android.app.Activity;
 import android.os.Bundle;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.GridLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ImageView;
 import android.widget.EditText;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends Activity {
-    private final int bg = Color.rgb(244,246,250);
-    private final int ink = Color.rgb(25,28,35);
-    private final int muted = Color.rgb(103,111,126);
-    private final int blue = Color.rgb(52,120,246);
+    private final int surface = Color.rgb(245, 247, 251);
+    private final int card = Color.rgb(255, 255, 255);
+    private final int ink = Color.rgb(24, 27, 35);
+    private final int muted = Color.rgb(100, 107, 123);
+    private final int blue = Color.rgb(52, 120, 246);
     private LinearLayout root;
     private boolean drawerOpen = false;
     private List<ResolveInfo> launchables = new ArrayList<>();
 
-    @Override public void onCreate(Bundle state) {
+    @Override
+    public void onCreate(Bundle state) {
         super.onCreate(state);
-        getWindow().setStatusBarColor(bg);
-        getWindow().setNavigationBarColor(bg);
-        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+        getWindow().setStatusBarColor(surface);
+        getWindow().setNavigationBarColor(surface);
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
         loadApps();
         showHome();
     }
@@ -49,11 +50,8 @@ public class MainActivity extends Activity {
         Intent query = new Intent(Intent.ACTION_MAIN, null);
         query.addCategory(Intent.CATEGORY_LAUNCHER);
         launchables = getPackageManager().queryIntentActivities(query, 0);
-        Collections.sort(launchables, new Comparator<ResolveInfo>() {
-            public int compare(ResolveInfo a, ResolveInfo b) {
-                return a.loadLabel(getPackageManager()).toString().compareToIgnoreCase(b.loadLabel(getPackageManager()).toString());
-            }
-        });
+        Collections.sort(launchables, (a, b) -> a.loadLabel(getPackageManager()).toString()
+                .compareToIgnoreCase(b.loadLabel(getPackageManager()).toString()));
     }
 
     private GradientDrawable shape(int color, int radius) {
@@ -63,13 +61,13 @@ public class MainActivity extends Activity {
         return d;
     }
 
-    private TextView text(String value, int size, int color, boolean bold) {
+    private TextView label(String text, float size, int color, boolean bold) {
         TextView t = new TextView(this);
-        t.setText(value);
+        t.setText(text);
         t.setTextSize(size);
         t.setTextColor(color);
         t.setGravity(Gravity.CENTER_VERTICAL);
-        if (bold) t.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        if (bold) t.setTypeface(Typeface.create("sans", Typeface.BOLD));
         return t;
     }
 
@@ -92,157 +90,274 @@ public class MainActivity extends Activity {
 
     private void base() {
         root = column();
-        root.setBackgroundColor(bg);
+        root.setBackgroundColor(surface);
         setContentView(root);
+    }
+
+    private int px(int dp) {
+        return (int) (dp * getResources().getDisplayMetrics().density);
     }
 
     private void showHome() {
         drawerOpen = false;
         base();
-        LinearLayout header = row();
-        header.setPadding(24, 14, 24, 8);
-        TextView date = text(new SimpleDateFormat("EEEE, MMMM d", Locale.getDefault()).format(new Date()), 14, muted, true);
-        header.addView(date, new LinearLayout.LayoutParams(0, 44, 1));
-        Button quick = smallButton("☼");
-        quick.setOnClickListener(v -> showQuickPanel());
-        header.addView(quick, lp(48, 44));
-        root.addView(header);
 
-        LinearLayout content = column();
-        content.setPadding(22, 12, 22, 8);
-        TextView clock = text(new SimpleDateFormat("h:mm", Locale.getDefault()).format(new Date()), 48, ink, false);
-        content.addView(clock, lp(-1, 62));
-        TextView greeting = text("Good day", 17, muted, false);
-        content.addView(greeting, lp(-1, 30));
+        LinearLayout status = row();
+        status.setPadding(px(28), px(8), px(28), px(4));
+        TextView time = label(new SimpleDateFormat("h:mm", Locale.getDefault()).format(new Date()), 14, ink, true);
+        status.addView(time, new LinearLayout.LayoutParams(0, px(32), 1));
+        TextView statusRight = label("●  Wi-Fi", 14, ink, false);
+        statusRight.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
+        status.addView(statusRight, lp(px(180), px(32)));
+        root.addView(status, lp(-1, px(42)));
+
+        LinearLayout content = row();
+        content.setPadding(px(56), px(18), px(56), px(18));
+
+        LinearLayout left = column();
+        left.setLayoutParams(new LinearLayout.LayoutParams(0, -1, 1));
+        left.setPadding(0, 0, px(18), 0);
+
+        TextView clock = label(new SimpleDateFormat("h:mm", Locale.getDefault()).format(new Date()), 76, ink, false);
+        left.addView(clock, lp(-1, px(92)));
+        TextView date = label(new SimpleDateFormat("EEEE, MMMM d", Locale.getDefault()).format(new Date()), 18, muted, false);
+        left.addView(date, lp(-1, px(34)));
+
         LinearLayout weather = column();
-        weather.setPadding(20, 16, 20, 16);
-        weather.setBackground(shape(Color.WHITE, 28));
-        TextView weatherTitle = text("Weather", 16, ink, true);
-        weather.addView(weatherTitle, lp(-1, 28));
-        weather.addView(text("Add a weather provider to show local conditions", 13, muted, false), lp(-1, 28));
-        LinearLayout.LayoutParams wp = lp(-1, 88); wp.topMargin = 12;
-        content.addView(weather, wp);
+        weather.setPadding(px(22), px(18), px(22), px(18));
+        weather.setBackground(shape(card, px(30)));
+        LinearLayout.LayoutParams weatherParams = lp(-1, px(138));
+        weatherParams.topMargin = px(18);
+        weather.addView(label("☀  72°", 32, ink, false), lp(-1, px(44)));
+        weather.addView(label("Mostly Sunny", 14, muted, false), lp(-1, px(28)));
+        weather.addView(label("Fire OS tablet weather card", 12, muted, false), lp(-1, px(24)));
+        left.addView(weather, weatherParams);
 
+        LinearLayout right = column();
+        right.setLayoutParams(new LinearLayout.LayoutParams(0, -1, 1));
+        right.setPadding(px(18), 0, 0, 0);
+
+        LinearLayout searchCard = row();
+        searchCard.setPadding(px(16), 0, px(16), 0);
+        searchCard.setBackground(shape(card, px(28)));
+        TextView searchIcon = label("⌕", 22, muted, false);
+        searchCard.addView(searchIcon, lp(px(34), px(56)));
         EditText search = new EditText(this);
-        search.setSingleLine(true);
-        search.setTextSize(15);
         search.setHint("Search apps");
-        search.setPadding(18, 0, 18, 0);
-        search.setBackground(shape(Color.WHITE, 30));
-        LinearLayout.LayoutParams sp = lp(-1, 52); sp.topMargin = 18;
-        content.addView(search, sp);
-        search.setOnEditorActionListener((v, action, event) -> { showDrawer(search.getText().toString()); return true; });
-        root.addView(content);
+        search.setSingleLine(true);
+        search.setTextSize(16);
+        search.setTextColor(ink);
+        search.setHintTextColor(muted);
+        search.setBackground(null);
+        searchCard.addView(search, new LinearLayout.LayoutParams(0, px(56), 1));
+        search.setOnEditorActionListener((v, action, event) -> {
+            showDrawer(search.getText().toString());
+            return true;
+        });
+        right.addView(searchCard, lp(-1, px(56)));
 
-        TextView section = text("Favorite apps", 17, ink, true);
-        section.setPadding(24, 12, 24, 6);
-        root.addView(section, lp(-1, 38));
-        ScrollView scroll = new ScrollView(this);
+        TextView appsTitle = label("Your apps", 18, ink, true);
+        LinearLayout.LayoutParams titleParams = lp(-1, px(44));
+        titleParams.topMargin = px(16);
+        right.addView(appsTitle, titleParams);
+
+        ScrollView appScroll = new ScrollView(this);
         GridLayout grid = new GridLayout(this);
-        grid.setColumnCount(4);
-        addAppTiles(grid, Math.min(8, launchables.size()));
-        scroll.addView(grid);
-        root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+        grid.setColumnCount(5);
+        grid.setUseDefaultMargins(false);
+        int count = Math.min(10, launchables.size());
+        for (int i = 0; i < count; i++) addTile(grid, launchables.get(i), 5);
+        appScroll.addView(grid);
+        right.addView(appScroll, new LinearLayout.LayoutParams(-1, 0, 1));
 
-        LinearLayout footer = row();
-        footer.setGravity(Gravity.CENTER);
-        footer.setPadding(16, 8, 16, 14);
-        Button all = smallButton("All apps");
+        content.addView(left);
+        content.addView(right);
+        root.addView(content, new LinearLayout.LayoutParams(-1, 0, 1));
+
+        LinearLayout dock = row();
+        dock.setGravity(Gravity.CENTER);
+        dock.setPadding(px(16), px(10), px(16), px(14));
+        LinearLayout dockCard = row();
+        dockCard.setGravity(Gravity.CENTER);
+        dockCard.setPadding(px(12), px(8), px(12), px(8));
+        dockCard.setBackground(shape(card, px(34)));
+
+        Button all = dockButton("⋯  Apps");
         all.setOnClickListener(v -> showDrawer(""));
-        Button settings = smallButton("Settings");
+        dockCard.addView(all, lp(px(120), px(48)));
+        Button quick = dockButton("☼  Quick settings");
+        quick.setOnClickListener(v -> showQuickPanel());
+        dockCard.addView(quick, lp(px(170), px(48)));
+        Button settings = dockButton("⚙  Settings");
         settings.setOnClickListener(v -> openSystemSettings());
-        footer.addView(all, new LinearLayout.LayoutParams(0, 48, 1));
-        footer.addView(settings, new LinearLayout.LayoutParams(0, 48, 1));
-        root.addView(footer);
+        dockCard.addView(settings, lp(px(130), px(48)));
+        dock.addView(dockCard);
+        root.addView(dock, lp(-1, px(76)));
     }
 
-    private void addAppTiles(GridLayout grid, int count) {
-        for (int i=0; i<count; i++) addTile(grid, launchables.get(i));
-    }
-
-    private void addTile(GridLayout grid, ResolveInfo info) {
+    private void addTile(GridLayout grid, ResolveInfo info, int columns) {
         LinearLayout tile = column();
         tile.setGravity(Gravity.CENTER);
-        tile.setPadding(4, 8, 4, 8);
+        tile.setPadding(px(5), px(8), px(5), px(8));
+
         ImageView icon = new ImageView(this);
-        try { icon.setImageDrawable(info.loadIcon(getPackageManager())); } catch(Exception ignored) {}
-        tile.addView(icon, lp(48,48));
-        TextView label = text(info.loadLabel(getPackageManager()).toString(), 11, ink, false);
-        label.setGravity(Gravity.CENTER);
-        label.setMaxLines(2);
-        tile.addView(label, lp(-1, 34));
+        try { icon.setImageDrawable(info.loadIcon(getPackageManager())); } catch (Exception ignored) {}
+        tile.addView(icon, lp(px(54), px(54)));
+
+        TextView appLabel = label(info.loadLabel(getPackageManager()).toString(), 11, ink, false);
+        appLabel.setGravity(Gravity.CENTER);
+        appLabel.setMaxLines(2);
+        tile.addView(appLabel, lp(px(110), px(38)));
         tile.setOnClickListener(v -> launch(info));
+
         GridLayout.LayoutParams p = new GridLayout.LayoutParams();
-        p.width = getResources().getDisplayMetrics().widthPixels / 4;
-        p.height = 104;
+        p.width = px(112);
+        p.height = px(104);
+        p.leftMargin = px(4);
+        p.rightMargin = px(4);
+        p.topMargin = px(4);
+        p.bottomMargin = px(4);
         grid.addView(tile, p);
     }
 
     private void showDrawer(String filter) {
         drawerOpen = true;
         base();
-        LinearLayout top = row(); top.setPadding(22, 14, 22, 12);
-        TextView title = text("Apps", 28, ink, true);
-        top.addView(title, new LinearLayout.LayoutParams(0, 52, 1));
-        Button close = smallButton("Home");
-        close.setOnClickListener(v -> showHome());
-        top.addView(close, lp(76,44));
-        root.addView(top);
+
+        LinearLayout header = row();
+        header.setPadding(px(28), px(16), px(28), px(10));
+        header.addView(label("Apps", 30, ink, true), new LinearLayout.LayoutParams(0, px(56), 1));
+        Button home = pillButton("Home");
+        home.setOnClickListener(v -> showHome());
+        header.addView(home, lp(px(90), px(44)));
+        root.addView(header);
+
         EditText search = new EditText(this);
-        search.setSingleLine(true); search.setText(filter); search.setHint("Find an app");
-        search.setPadding(18,0,18,0); search.setBackground(shape(Color.WHITE,28));
-        LinearLayout.LayoutParams ep=lp(-1,52); ep.setMargins(20,0,20,12); root.addView(search,ep);
+        search.setText(filter);
+        search.setHint("Search apps");
+        search.setTextSize(16);
+        search.setTextColor(ink);
+        search.setHintTextColor(muted);
+        search.setPadding(px(20), 0, px(20), 0);
+        search.setSingleLine(true);
+        search.setBackground(shape(card, px(28)));
+        LinearLayout.LayoutParams searchParams = lp(-1, px(54));
+        searchParams.setMargins(px(28), 0, px(28), px(14));
+        root.addView(search, searchParams);
+
         ScrollView scroll = new ScrollView(this);
-        GridLayout grid = new GridLayout(this); grid.setColumnCount(4);
-        for (ResolveInfo info : launchables) {
-            String label=info.loadLabel(getPackageManager()).toString();
-            if (filter == null || filter.isEmpty() || label.toLowerCase(Locale.ROOT).contains(filter.toLowerCase(Locale.ROOT))) addTile(grid,info);
-        }
-        scroll.addView(grid); root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
+        GridLayout grid = new GridLayout(this);
+        grid.setColumnCount(getResources().getDisplayMetrics().widthPixels > px(900) ? 7 : 5);
+        grid.setPadding(px(24), px(8), px(24), px(24));
+        filterAndAdd(grid, filter);
+        scroll.addView(grid);
+        root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+
         search.addTextChangedListener(new android.text.TextWatcher() {
-            public void beforeTextChanged(CharSequence s,int st,int c,int a) {}
-            public void onTextChanged(CharSequence s,int st,int before,int count) { showDrawerGrid(grid,s.toString()); }
-            public void afterTextChanged(android.text.Editable e) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                grid.removeAllViews();
+                filterAndAdd(grid, s.toString());
+            }
+            public void afterTextChanged(android.text.Editable s) {}
         });
     }
 
-    private void showDrawerGrid(GridLayout grid, String filter) {
-        grid.removeAllViews();
+    private void filterAndAdd(GridLayout grid, String filter) {
+        int columns = grid.getColumnCount();
         for (ResolveInfo info : launchables) {
-            String label=info.loadLabel(getPackageManager()).toString();
-            if (label.toLowerCase(Locale.ROOT).contains(filter.toLowerCase(Locale.ROOT))) addTile(grid,info);
+            String name = info.loadLabel(getPackageManager()).toString();
+            if (filter == null || filter.isEmpty() || name.toLowerCase(Locale.ROOT)
+                    .contains(filter.toLowerCase(Locale.ROOT))) {
+                addTile(grid, info, columns);
+            }
         }
     }
 
     private void showQuickPanel() {
         base();
-        LinearLayout panel=column(); panel.setPadding(24,24,24,24);
-        TextView title=text("Quick settings",28,ink,true); panel.addView(title,lp(-1,60));
-        String[] actions={"Wi-Fi settings","Bluetooth settings","Display settings","Sound settings","Battery settings","Device settings"};
-        String[] intents={android.provider.Settings.ACTION_WIFI_SETTINGS,android.provider.Settings.ACTION_BLUETOOTH_SETTINGS,android.provider.Settings.ACTION_DISPLAY_SETTINGS,android.provider.Settings.ACTION_SOUND_SETTINGS,android.provider.Settings.ACTION_BATTERY_SAVER_SETTINGS,android.provider.Settings.ACTION_SETTINGS};
-        for(int i=0;i<actions.length;i++){ final String action=intents[i]; Button b=smallButton(actions[i]); b.setOnClickListener(v->{try{startActivity(new Intent(action));}catch(Exception e){openSystemSettings();}}); LinearLayout.LayoutParams p=lp(-1,58);p.topMargin=8;panel.addView(b,p); }
-        Button back=smallButton("Back to home"); back.setOnClickListener(v->showHome()); panel.addView(back,lp(-1,54));
+
+        LinearLayout panel = column();
+        panel.setPadding(px(28), px(18), px(28), px(18));
+
+        LinearLayout header = row();
+        header.addView(label("Quick settings", 28, ink, true), new LinearLayout.LayoutParams(0, px(60), 1));
+        Button home = pillButton("Done");
+        home.setOnClickListener(v -> showHome());
+        header.addView(home, lp(px(90), px(44)));
+        panel.addView(header);
+
+        GridLayout tiles = new GridLayout(this);
+        tiles.setColumnCount(3);
+        String[] names = {"Wi-Fi", "Bluetooth", "Display", "Sound", "Battery", "Device"};
+        String[] actions = {
+                android.provider.Settings.ACTION_WIFI_SETTINGS,
+                android.provider.Settings.ACTION_BLUETOOTH_SETTINGS,
+                android.provider.Settings.ACTION_DISPLAY_SETTINGS,
+                android.provider.Settings.ACTION_SOUND_SETTINGS,
+                android.provider.Settings.ACTION_BATTERY_SAVER_SETTINGS,
+                android.provider.Settings.ACTION_SETTINGS
+        };
+        for (int i = 0; i < names.length; i++) {
+            final String action = actions[i];
+            Button tile = pillButton(names[i]);
+            tile.setTextSize(16);
+            tile.setOnClickListener(v -> {
+                try { startActivity(new Intent(action)); }
+                catch (Exception e) { openSystemSettings(); }
+            });
+            GridLayout.LayoutParams p = new GridLayout.LayoutParams();
+            p.width = px(210);
+            p.height = px(72);
+            p.leftMargin = px(8);
+            p.rightMargin = px(8);
+            p.topMargin = px(8);
+            p.bottomMargin = px(8);
+            tiles.addView(tile, p);
+        }
+        panel.addView(tiles);
+        panel.addView(label("System controls open the appropriate Fire OS settings screen.", 14, muted, false),
+                lp(-1, px(50)));
         root.addView(panel);
     }
 
     private void openSystemSettings() {
         try { startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS)); }
-        catch(Exception e) { Toast.makeText(this,"Settings could not be opened",Toast.LENGTH_SHORT).show(); }
+        catch (Exception e) { Toast.makeText(this, "Settings could not be opened", Toast.LENGTH_SHORT).show(); }
     }
 
-    private Button smallButton(String label) {
-        Button b=new Button(this); b.setText(label); b.setTextColor(ink); b.setAllCaps(false); b.setTextSize(14);
-        b.setBackground(shape(Color.WHITE,24)); return b;
+    private Button dockButton(String text) {
+        Button b = new Button(this);
+        b.setText(text);
+        b.setTextColor(ink);
+        b.setAllCaps(false);
+        b.setTextSize(14);
+        b.setBackground(shape(Color.rgb(248,249,252), px(24)));
+        return b;
+    }
+
+    private Button pillButton(String text) {
+        Button b = new Button(this);
+        b.setText(text);
+        b.setTextColor(ink);
+        b.setAllCaps(false);
+        b.setTextSize(14);
+        b.setBackground(shape(card, px(22)));
+        return b;
     }
 
     private void launch(ResolveInfo info) {
         try {
-            Intent i=getPackageManager().getLaunchIntentForPackage(info.activityInfo.packageName);
-            if(i!=null) startActivity(i);
-        } catch(Exception e) { Toast.makeText(this,"Unable to launch app",Toast.LENGTH_SHORT).show(); }
+            Intent i = getPackageManager().getLaunchIntentForPackage(info.activityInfo.packageName);
+            if (i != null) startActivity(i);
+        } catch (Exception e) {
+            Toast.makeText(this, "Unable to launch app", Toast.LENGTH_SHORT).show();
+        }
     }
 
-    @Override public void onBackPressed() {
-        if(drawerOpen) showHome(); else super.onBackPressed();
+    @Override
+    public void onBackPressed() {
+        if (drawerOpen) showHome();
+        else super.onBackPressed();
     }
 }
